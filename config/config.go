@@ -11,21 +11,22 @@ import (
 var DB *sql.DB
 
 func ConnectDB() {
+    err := godotenv.Load()
+    if err != nil {
+        log.Println("Error loading .env file, using environment variables directly")
+    }
+    dbURL := os.Getenv("DATABASE_URL")
 
-	err := godotenv.Load()
-	if err != nil {
-		panic("Error loading .env file")
-	}
-	dbURL := os.Getenv("DATABASE_URL")
-
-	DB, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		panic("Failed to connect to database: " + err.Error())
-		
-	}
-	err = DB.Ping()
-	if err != nil {
-		panic("Failed to ping database: " + err.Error())
-	}
-	log.Println("Connected to database successfully")
+    var errOpen error
+    DB, errOpen = sql.Open("postgres", dbURL)
+    if errOpen != nil {
+        log.Fatalf("Error connecting to the database: %v", errOpen)
+        return
+    }
+    errPing := DB.Ping()
+    if errPing != nil {
+        log.Fatalf("Error connecting to the database: %v", errPing)
+        return
+    }
+    log.Println("Connected to database successfully")
 }
