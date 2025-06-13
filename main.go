@@ -17,6 +17,7 @@ func main() {
 	routes.AuthRoutes(r)
 	routes.ProtectedRoutes(r)
 	routes.PostRoutes(r)
+	routes.FollowRoutes(r)
 	r.Run(":8080") // Start the server on port 8080
 	log.Println("Server running on port 8080")
 }

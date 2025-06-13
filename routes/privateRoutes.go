@@ -10,7 +10,7 @@ func ProtectedRoutes(r *gin.Engine) {
 	protected.Use(middleware.AuthMiddleware())
 
 	protected.GET("/me"	,func ( c *gin.Context)  {
-		userID := c.MustGet("userID").(int) // Retrieve user ID from context
+		userID := c.MustGet("user_id").(int) // Retrieve user ID from context
 		c.JSON(200,gin.H{
 			"user_id": userID,
 			"message": "This is a protected route",
