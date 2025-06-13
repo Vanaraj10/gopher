@@ -11,6 +11,7 @@ func RegisterCommentRoutes(r *gin.Engine,authMiddleware gin.HandlerFunc) {
 	comments.Use(authMiddleware) // Apply authentication middleware to all comment routes
 	{
 		comments.POST("/:post_id", controllers.AddComment) // Create a new comment
-		comments.GET("/:post_id", controllers.GetCommentsByPost)    // Get comments for a specific post   
+		comments.GET("/:post_id", controllers.GetCommentsByPost)    // Get comments for a specific post 
+		comments.DELETE("/:id", controllers.DeleteComment)  // Delete a comment by ID
 	}
 }

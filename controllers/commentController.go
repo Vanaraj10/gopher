@@ -70,3 +70,31 @@ func GetCommentsByPost(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"comments": comments})
 }
+
+func DeleteComment(c *gin.Context) {
+	// Logic to delete a comment
+	// This function will handle the request to delete a comment
+	// It should check if the user is authorized to delete the comment
+	// and then remove it from the database.
+	userID := c.GetInt("user_id")                 // Retrieve user ID from context
+	commentID, err := strconv.Atoi(c.Param("id")) // Get comment ID from URL parameters
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid comment ID"})
+		return
+	}
+	result, err := config.DB.Exec(
+		`DDELETE FROM comments
+		 WHERE id = $1 AND user_id = $2`,
+		commentID, userID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete comment"})
+		return
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Comment not found or not authorized to delete"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Comment deleted successfully"})
+}
