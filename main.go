@@ -20,6 +20,7 @@ func main() {
 	routes.PostRoutes(r)
 	routes.FollowRoutes(r)
 	routes.RegisterCommentRoutes(r, middleware.AuthMiddleware())
+	routes.RegisterUserRoutes(r, middleware.AuthMiddleware())
 	r.Run(":8080") // Start the server on port 8080
 	log.Println("Server running on port 8080")
 }
