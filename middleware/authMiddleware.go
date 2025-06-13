@@ -39,7 +39,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		userID := int(claims["user_id"].(float64)) // Convert float64 to int
-		c.Set("userID", userID) // Store user ID in context for later use
+		c.Set("user_id", userID) // Store user ID in context for later use
 		c.Next() // Proceed to the next handler
 	}
 }
