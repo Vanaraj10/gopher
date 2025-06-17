@@ -9,5 +9,6 @@ func RegisterRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 	{
 		api.POST("/signup",controllers.Signup)
+		api.GET("/verify",controllers.VerifyEmail)
 	}
 }
