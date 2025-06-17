@@ -10,5 +10,6 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		api.POST("/signup",controllers.Signup)
 		api.GET("/verify",controllers.VerifyEmail)
+		api.POST("/login", controllers.Login)
 	}
 }

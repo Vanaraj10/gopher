@@ -122,3 +122,49 @@ func VerifyEmail(c *gin.Context) {
 		"message":"Email verified successfully",
 	})
 }
+
+func Login(c *gin.Context) {
+	var input struct {
+		Email   string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required"`
+	}
+	// Bind the JSON input to the input struct
+	if err:= c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"+err.Error()})
+		return
+	}
+	var userCollection = config.GetCollection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var user models.User
+
+	err := userCollection.FindOne(ctx, bson.M{"email": input.Email}).Decode(&user)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+	if !user.Verified {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email not verified"})
+		return
+	}
+	if !utils.CheckPasswordHash(input.Password, user.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+	token, err := utils.GenerateAuthToken(user.ID.Hex())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"token":   token,
+		 "user": gin.H{
+			"id":       user.ID.Hex(),
+			"email":    user.Email,
+			"name":     user.Name,
+		 },
+	})
+}
