@@ -59,20 +59,20 @@ func Signup(c *gin.Context) {
 	// Insert the new user into the database
 	_, err = userCollection.InsertOne(ctx, user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"+err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user" + err.Error()})
 		return
 	}
 
 	token, err := utils.GenerateEmailToken(user.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError,gin.H{
-			"error":"Token creation failed",
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Token creation failed",
 		})
 		return
 	}
-	if err := utils.SendVerificationEmail(user.Email,token); err != nil {
+	if err := utils.SendVerificationEmail(user.Email, token); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send verification email"})
-        return
+		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully", "user": user})
@@ -83,54 +83,54 @@ func VerifyEmail(c *gin.Context) {
 	tokenString := c.Query("token")
 	if tokenString == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Token is required"})
-        return
+		return
 	}
 
-	token, err := jwt.Parse(tokenString,func(token *jwt.Token) (interface{}, error) {
-		if _,ok := token.Method.(*jwt.SigningMethodHMAC) ; !ok {
-			 return nil, fmt.Errorf("invalid signing method")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("invalid signing method")
 		}
-		return []byte(os.Getenv("JWT_SECRET")),nil
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil || !token.Valid {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
-        return
+		return
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["email"]==nil {
-		c.JSON(http.StatusUnauthorized,gin.H{
-			"error":"Invalid token data",
+	if !ok || claims["email"] == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Invalid token data",
 		})
 		return
 	}
 	email := claims["email"]
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
+	defer cancel()
 
-	filter := bson.M{"email":email}
-	update := bson.M{"$set":bson.M{"verified":true}}
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": bson.M{"verified": true}}
 
-	res, err := userCollection.UpdateOne(ctx,filter,update)
+	res, err := userCollection.UpdateOne(ctx, filter, update)
 	if err != nil || res.ModifiedCount == 0 {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify user"})
-        return
+		return
 	}
 
-	c.JSON(http.StatusOK,gin.H{
-		"message":"Email verified successfully",
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Email verified successfully",
 	})
 }
 
 func Login(c *gin.Context) {
 	var input struct {
-		Email   string `json:"email" binding:"required,email"`
+		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required"`
 	}
 	// Bind the JSON input to the input struct
-	if err:= c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"+err.Error()})
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data" + err.Error()})
 		return
 	}
 	var userCollection = config.GetCollection("users")
@@ -161,10 +161,24 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
 		"token":   token,
-		 "user": gin.H{
-			"id":       user.ID.Hex(),
-			"email":    user.Email,
-			"name":     user.Name,
-		 },
+		"user": gin.H{
+			"id":    user.ID.Hex(),
+			"email": user.Email,
+			"name":  user.Name,
+		},
+	})
+}
+
+func Me(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userDetails := user.(models.User)
+	c.JSON(http.StatusOK, gin.H{
+		"id":    userDetails.ID.Hex(),
+		"email": userDetails.Email,
+		"name":  userDetails.Name,
 	})
 }

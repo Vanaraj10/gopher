@@ -19,8 +19,10 @@ func main() {
 	config.ConnectDB()
 
 	router := gin.Default()
+
 	routes.RegisterRoutes(router)
 
 	port := os.Getenv("PORT")
+	
 	router.Run(":" + port) // Run the server on the specified port
 }
